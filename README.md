@@ -54,6 +54,20 @@ search — so it returns playable suggestions instead of erroring, and only
   legacy `/docs` redirects here).
 - Floating pill navbar, light + dark schemes following the OS preference.
 
+### MCP server for AI clients
+
+`POST /api/mcp` is a Streamable-HTTP MCP server (`fusion-beats-api`) so any
+MCP-capable AI can call the catalog directly — no REST wrangling needed:
+
+- `search_songs(query, page, limit)` / `search_all(query)` — find music
+- `get_song(ids?, link?)` — full details incl. all stream qualities
+- `get_stream_url(id, quality?)` — best direct audio URL + alternatives;
+  feed `.data.url` to any player to stream
+- `get_suggestions(id, limit?)` — similar songs
+- resource `fusion-beats://docs` — tool + REST reference
+
+Point your client at `https://<host>/api/mcp` (Streamable HTTP).
+
 ### Hardened by default
 
 - Missing `query`/`id`/`link` → `400` with a plain message (albums/artists
