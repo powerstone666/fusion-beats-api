@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Fusion Beats API
+
+Music API + web player in a single Next.js project (npm, TypeScript, App Router).
+Search songs, albums, artists and playlists, stream previews and download links —
+same endpoints and `{ success, data }` shapes as the original Hono service, now as
+App Router route handlers, with a Material Design 3 web UI.
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). API under `/api/*` — see the
+in-app [Playground](/playground) explorer for all 14 endpoints.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm run start
+```
 
-## Learn More
+Vercel-ready as-is (`vercel --prod` or the dashboard import): no env vars required,
+no adapter config. Public CORS (`*`) and `s-maxage=300` caching are configured for
+`/api/*`.
 
-To learn more about Next.js, take a look at the following resources:
+## Notes on parity
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Upstream business logic in `lib/` is ported verbatim from the original service.
+- `GET /api/artists` and `/api/albums` return `400` when neither `id` nor `link`
+  is given (the original only did this for songs/playlists).
+- `GET /api/songs/:id/suggestions` prefers provider radio, but radio is
+  geo-restricted upstream, so it falls back to more songs by the same artist
+  (then title search) instead of erroring.
+- Invalid `sortBy`/`sortOrder` values fall back to defaults instead of 400.
