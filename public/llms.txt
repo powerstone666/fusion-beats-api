@@ -1,0 +1,80 @@
+# Fusion Beats API — AI Client Guide
+
+Music search, details, streaming and suggestions. Two ways for AI agents
+to use this service: MCP tools (preferred for MCP clients) or plain REST.
+Replace `<host>` with the deployed origin (e.g. `https://<app>.vercel.app`).
+
+## Option A — MCP (recommended for MCP clients)
+
+- Endpoint: `POST <host>/api/mcp` (Streamable HTTP, stateless, no auth)
+- Server name: `fusion-beats-api`, version `1.0.0`
+- Docs resource: `fusion-beats://docs` (tools + REST reference)
+
+### Claude Desktop (`claude_desktop_config.json`)
+
+```json
+{
+  "mcpServers": {
+    "fusion-beats": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://<host>/api/mcp"]
+    }
+  }
+}
+```
+
+### Cursor / Windsurf / direct-URL clients
+
+Add an MCP server with URL `https://<host>/api/mcp` (Streamable HTTP).
+
+### Tools
+
+- `search_songs(query: string, page = 0, limit = 10)` — song search.
+  Returns `{ success, data: { total, start, results: [{ id, name, ... }] } }`.
+  Keep a returned `id` for playback steps below.
+- `search_all(query: string)` — songs + albums + artists + playlists at once.
+- `get_song(ids?: string, link?: string)` — full details for comma-separated
+  IDs (or a direct song link). Includes `downloadUrl` (12–320kbps) and `image`.
+  One of `ids`/`link` is required.
+- `get_stream_url(id: string, quality = "320kbps")` — best direct audio URL
+  for a song plus all qualities. Feed `data.url` to any audio player or
+  downloader to stream. Qualities: 12kbps, 48kbps, 96kbps, 160kbps, 320kbps.
+- `get_suggestions(id: string, limit = 10)` — similar songs for continuous
+  playback. Tries provider radio, falls back to same-artist then title search.
+
+### Typical agent flow (play a song)
+
+1. `search_songs({ query: "<song or artist>" })` → pick `results[0].id`
+2. `get_stream_url({ id })` → play `data.url` (320kbps `.mp4`/AAC)
+3. `get_suggestions({ id })` → queue more tracks
+
+### Errors
+
+Tool failures return `isError: true` with
+`{ success: false, status, message }` as text. `404` means upstream has no
+match; retry with a different query rather than the same call.
+
+## Option B — REST (any HTTP-capable agent)
+
+Base: `<host>/api/*`. Open CORS (`*`), cached (`s-maxage=300`). Every endpoint
+answers `{ success: true, data }`; failures are `{ success: false, message }`
+with 400/404/500 status.
+
+- `GET /api/search/songs?query=&page=0&limit=10`
+- `GET /api/search?query=` (all types)
+- `GET /api/search/albums|artists|playlists?query=&page=&limit=`
+- `GET /api/songs?ids=a,b` or `?link=` · `GET /api/songs/:id`
+- `GET /api/songs/:id/suggestions?limit=`
+- `GET /api/albums?id=&link=`
+- `GET /api/artists?id=&link=&page=&songCount=&albumCount=&sortBy=popularity&sortOrder=asc`
+- `GET /api/artists/:id` · `/:id/songs` · `/:id/albums`
+- `GET /api/playlists?id=&link=&page=&limit=`
+
+`query`/`id` are required where shown; `artists`/`albums` need `id` or `link`.
+`sortBy`: popularity|latest|alphabetical (unknown values fall back to defaults).
+`downloadUrl[].url` entries are the playable streams (prefer 320kbps).
+
+## Interactive reference
+
+Humans (and browser agents) can try every endpoint in the Playground:
+`<host>/playground` (deep-linkable, e.g. `/playground?endpoint=song-by-id`).

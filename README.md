@@ -68,6 +68,10 @@ MCP-capable AI can call the catalog directly — no REST wrangling needed:
 
 Point your client at `https://<host>/api/mcp` (Streamable HTTP).
 
+Machine-readable setup guide (MCP configs, tool schemas, REST table,
+agent playback flow): [`/llms.txt`](/llms.txt) — also at `public/llms.txt`
+in this repo.
+
 ### Hardened by default
 
 - Missing `query`/`id`/`link` → `400` with a plain message (albums/artists
